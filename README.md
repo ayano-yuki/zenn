@@ -6,9 +6,6 @@
 ```bash
 pnpm zenn new:article --slug [slug]
 ```
-- 【Softetherの備忘録】Softether VPN ServerのCUI操作(memorandum-softether_vpn_server-cui)
-- 【プリキュア分析】キャラクターの特徴からシリーズの特定(tech-data-precute_analy_01)
-- 【OpenPLCの備忘録】modbus RTU通信の使い方(memorandum-openplc-modbus_rtu)
 
 # slugの命名規則（接頭語）
 - 備忘録系
