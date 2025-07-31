@@ -1,5 +1,5 @@
 ---
-title: "SECCON Beginners CTF 2025のWriteeup"
+title: "SECCON Beginners CTF 2025のWriteup"
 emoji: "📓"
 type: "tech" # tech: 技術記事 / idea: アイデア
 topics: [CTF]
