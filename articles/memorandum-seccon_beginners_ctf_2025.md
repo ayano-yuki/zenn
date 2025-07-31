@@ -3,19 +3,19 @@ title: "SECCON Beginners CTF 2025のWriteeup"
 emoji: "📓"
 type: "tech" # tech: 技術記事 / idea: アイデア
 topics: [CTF]
-published: false
+published: true
 ---
 # はじめに
 母校の後輩とSECCON Beginners CTF 2025に参加したアヤノです。
 
-今回のCTFはあまり参加する時間が取れなかったので、開催後に解けそうな問題を全て時、Writeupを作成しました。
+今回のCTFはあまり参加する時間が取れなかったので、開催後に解けそうな問題を全て解き、Writeupを作成しました。
 
 # welcome
 ## welcome (100pt / 865 solves)
 > SECCON Beginners CTF 2025へようこそ Flagは >
 > ctf4b{W3lc0m3_2_SECCON_Beginners_CTF_2025} です
 
-問題文にflagがあるので答えは、「ctf4b{W3lc0m3_2_SECCON_Beginners_CTF_2025}」となる。
+問題文にフラグがあるので答えは、「ctf4b{W3lc0m3_2_SECCON_Beginners_CTF_2025}」となる。
 
 # web
 ## skipping (100pt / 737 solves)
@@ -37,7 +37,7 @@ app.get("/flag", check, (req, res, next) => {
     return res.send(FLAG);
 })
 ```
-check関数を見ると、`/flag`のリクエストヘッダー`x-ctf4b-request`の中身が`ctf4b`の場合にフラグをゲット出来るようになっている。そのため、以下のcurlコマンドで`x-ctf4b-request`の中身を`ctf4b`に設定するモノを投げるとフラグが得られる。以下のコマンドからこの問題のフラグは、「ctf4b{y0ur_5k1pp1n6_15_v3ry_n1c3}」と分かる。
+check関数を見ると、`/flag`のリクエストヘッダー`x-ctf4b-request`の中身が`ctf4b`の場合にフラグをゲット出来るようになっている。そのため、以下のcurlコマンドで`x-ctf4b-request`の中身を`ctf4b`に設定するモノを投げるとフラグが得られる。実行の結果、この問題のフラグである「ctf4b{y0ur_5k1pp1n6_15_v3ry_n1c3}」が得られる。
 
 ```
 $ curl -H "x-ctf4b-request: ctf4b" http://skipping.challenges.beginners.seccon.jp:33455/flag
@@ -57,7 +57,7 @@ ctf4b{y0ur_5k1pp1n6_15_v3ry_n1c3}
 
 ![](/images/articles/memorandum-seccon_beginners_ctf_2025/LogViewer2.png)
 
-`/?file=../../proc/self/cmdline `にアクセスしてみると、以下の結果が得られる。以下の結果からこの問題のフラグは、「ctf4b{h1dd1ng_1n_cmdl1n3_m4y_b3_r34d4bl3}」と分かる。
+`/?file=../../proc/self/cmdline `にアクセスしてみると、この問題のフラグである「ctf4b{h1dd1ng_1n_cmdl1n3_m4y_b3_r34d4bl3}」が得られる。
 
 ```
 /usr/local/bin/log-viewer-port=9999-flag=ctf4b{h1dd1ng_1n_cmdl1n3_m4y_b3_r34d4bl3}
@@ -75,7 +75,7 @@ https://qiita.com/mizutoki79/items/de7d4818a21378820eef
 ここから、「069891c8-1d0a-4dad-8be5-87485aa647ec」のメモにアクセスしてみる。しかし、以下のようにメモがないと言われるので、秘密のメモがあると仮定して、もう一度試してみる。
 ![](/images/articles/memorandum-seccon_beginners_ctf_2025/MemoRAG2.png)
 
-試してみると、フラグの情報らしきものが得られるので一度回答し、フラグが否かを確かめてみる。結果としてはフラグだったので、この問題のフラグは、「ctf4b{b3_c4r3ful_0f_func710n_c4ll1n6_m15u53d_4rgum3nt5}」となる。
+試してみると、フラグの情報らしきものが得られるので一度回答し、フラグが否かを確かめてみる。結果としてはフラグだったので、この問題のフラグが「ctf4b{b3_c4r3ful_0f_func710n_c4ll1n6_m15u53d_4rgum3nt5}」だと分かる。
 
 ![](/images/articles/memorandum-seccon_beginners_ctf_2025/MemoRAG3.png)
 
@@ -105,7 +105,7 @@ print(f"{c = }")
 # c = 104442881094680864129296583260490252400922571545171796349604339308085282733910615781378379107333719109188819881987696111496081779901973854697078360545565962079
 ```
 
-問題のプログラムはRSA暗号のようですが、qが小さいので全探索でも解けそうなので、ソルバーを書いてみる。プログラムを実行すると、この問題のフラグが「ctf4b{unb4l4nc3d_pr1m35_4r3_b4d}」だと分かる。
+問題のプログラムはRSA暗号のようですが、qが小さいので全探索でも解けそうなので、ソルバーを作成し、実行してみる。実行の結果、この問題のフラグである「ctf4b{unb4l4nc3d_pr1m35_4r3_b4d}」が得られる。
 
 ```py solver.py
 from Crypto.Util.number import inverse, long_to_bytes
@@ -168,7 +168,7 @@ print("ct:", encrypt(flag_translated, key).hex())
 3. ランダムに生成した16バイトの鍵で、置換後の文字列を AES-ECB で PKCS#7 パディングを付けて暗号化
 4. 暗号文を 16進 で表示する
 
-AES-ECBの脆弱性を利用して、「返ってきた暗号文を16バイトずつ区切り、最初のブロックと比較し、同じなら「1」、違えば「0」、こうしてビット列を復元し、整数→バイト列に戻してフラグを取得するソルバー」を作成する。プログラムを実行すると、この問題のフラグが「ctf4b{n0w_y0u'r3_4_b1n4r13n}」だと分かる。
+AES-ECBの脆弱性を利用して、「返ってきた暗号文を16バイトずつ区切り、最初のブロックと比較し、同じなら「1」、違えば「0」、こうしてビット列を復元し、整数→バイト列に戻してフラグを取得するソルバー」を作成し、実行してみる。実行の結果、この問題のフラグである「ctf4b{n0w_y0u'r3_4_b1n4r13n}」が得られる。
 
 ```py solver.py
 import os
@@ -192,6 +192,50 @@ print(long_to_bytes(int(binary, 2)))
 ```
 
 # misc
+## kingyo_sukui (100pt / 644 solves)
+> scooping! 
+> 
+> http://kingyo-sukui.challenges.beginners.seccon.jp:33333
+
+この問題は手動でも解けなくはないですが、面倒なのでスクリプトで解きます。この問題は、難読化されたフラグを以下の関数で比較して、フラグ判定をしていました。
+```js
+decryptFlag() {
+    try {
+      const key = atob(this.secretKey);
+      const encryptedBytes = atob(this.encryptedFlag);
+      let decrypted = "";
+      for (let i = 0; i < encryptedBytes.length; i++) {
+        const keyChar = key.charCodeAt(i % key.length);
+        const encryptedChar = encryptedBytes.charCodeAt(i);
+        decrypted += String.fromCharCode(encryptedChar ^ keyChar);
+      }
+      return decrypted;
+    } catch (error) {
+      return "decrypt error";
+    }
+}
+```
+難読化されたフラグと入力を比較する処理を参考にソルバーを作成し、実行してみる。実行の結果、この問題のフラグである「ctf4b{n47uma7ur1}」が得られる。
+
+```py
+import base64
+
+encrypted_flag = "CB0IUxsUCFhWEl9RBUAZWBM="
+secret_key = "a2luZ3lvZmxhZzIwMjU="
+
+# Base64デコード
+key = base64.b64decode(secret_key)
+encrypted_bytes = base64.b64decode(encrypted_flag)
+
+# XORで復号
+decrypted = ''.join(
+    chr(encrypted_bytes[i] ^ key[i % len(key)])
+    for i in range(len(encrypted_bytes))
+)
+
+print("Decrypted flag:", decrypted)
+```
+
 ## url-checker (100pt / 606 solves)
 > 有効なURLを作れますか？
 > 
@@ -257,7 +301,7 @@ except Exception as e:
 > 復号鍵 (HEX): 546869734973415365637265744b6579
 > chamber-of-echos.challenges.beginners.seccon.jp
 
-この問題のプログラムを確認すると、ICMP エコーリクエストをサーバーに送信すると、 AES-ECB モードで暗号化された データが返ることが分かる。 返るデータは、 FLAG を分割し、プレフィックスを付与したものになっているため、複数回リクエストを送信してデータを集めて、 FLAG を復元するとフラグが得られそうだ。。
+この問題のプログラムを確認すると、ICMP エコーリクエストをサーバーに送信すると、 AES-ECB モードで暗号化された データが返ることが分かる。 返るデータは、 FLAG を分割し、プレフィックスを付与したものになっているため、複数回リクエストを送信してデータを集めて、 FLAG を復元するとフラグが得られそうだ。
 
 ```py
 ################################################################################
@@ -871,7 +915,7 @@ with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
 今回のCTFのバックアップは作成しているので、時間がある時に解けなかった問題を他の人が書いたWriteupを参考にして解きたいです。
 
 ```
-解けなかった問題：memo4b, login4b, Elliptic4b, mathmyth, Golden Ticket, kingyo_sukui, MAFC, code_injection,　pivot4b, pivot4b++, TimeOfControl
+解けなかった問題：memo4b, login4b, Elliptic4b, mathmyth, Golden Ticket, MAFC, code_injection,　pivot4b, pivot4b++, TimeOfControl
 ```
 
 - [SECCON Beginners CTF 2025 作問者Writeup (Crypto)](https://yu212.hatenablog.com/entry/2025/07/27/163347)
