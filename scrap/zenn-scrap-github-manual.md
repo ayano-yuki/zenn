@@ -1,3 +1,24 @@
+# ZennのスクラップをGithubで管理したい（手動）
+
+- Created at: 2025-08-31
+- Closed: false
+- Archived: false
+
+---
+
+# やり方
+1. 画面右上にある自身のアイコンをクリックし、「スクラップの管理」を選択する
+2. 管理したい任意のスクラップの右にある「∨」をクリックし、「JSONで内容を出力」を選択する
+3. 出力されたJSONを管理先のフォルダにコピペする
+4. 以下のjson2mdを使って変換する
+5. Githubにプッシュする
+
+---
+
+# プログラム
+- プログラムの実行に必要なモジュールが必要になるので、`npm install --save-dev @types/node`を必要に応じて叩く
+
+```typescript
 // ---------------------------------------------------------
 // 
 // generate-md.ts
@@ -54,3 +75,5 @@ const outputPath = path.join(
 
 fs.writeFileSync(outputPath, markdown, "utf-8");
 console.log(`Markdown file generated: ${outputPath}`);
+```
+

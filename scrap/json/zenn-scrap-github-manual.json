@@ -1,0 +1,19 @@
+{
+  "title": "ZennのスクラップをGithubで管理したい（手動）",
+  "closed": false,
+  "archived": false,
+  "created_at": "2025-08-31",
+  "comments": [
+    {
+      "author": "yuki_ayano",
+      "created_at": "2025-08-31",
+      "body_markdown": "# やり方\n1. 画面右上にある自身のアイコンをクリックし、「スクラップの管理」を選択する\n2. 管理したい任意のスクラップの右にある「∨」をクリックし、「JSONで内容を出力」を選択する\n3. 出力されたJSONを管理先のフォルダにコピペする\n4. 以下のjson2mdを使って変換する\n5. Githubにプッシュする",
+      "body_updated_at": "2025-08-31"
+    },
+    {
+      "author": "yuki_ayano",
+      "created_at": "2025-08-31",
+      "body_markdown": "# プログラム\n- プログラムの実行に必要なモジュールが必要になるので、`npm install --save-dev @types/node`を必要に応じて叩く\n\n```typescript\n// ---------------------------------------------------------\n// \n// generate-md.ts\n// 実行コマンド: tsx generate-md.ts <input.json>\n// \n// ---------------------------------------------------------\n\nimport * as fs from \"fs\";\nimport * as path from \"path\";\n\n// コマンドライン引数の取得\nconst args = process.argv.slice(2);\nif (args.length < 1) {\n  console.error(\"Usage: tsx generate-md.ts <input.json>\");\n  process.exit(1);\n}\n\nconst inputPath = path.resolve(process.cwd(), args[0]);\nif (!fs.existsSync(inputPath)) {\n  console.error(`File not found: ${inputPath}`);\n  process.exit(1);\n}\n\n// JSONの読み込み\nconst raw = fs.readFileSync(inputPath, \"utf-8\");\nconst json = JSON.parse(raw);\n\n// Markdownを構築\nlet markdown = `# ${json.title}\\n\\n`;\nmarkdown += `- Created at: ${json.created_at}\\n`;\nmarkdown += `- Closed: ${json.closed}\\n`;\nmarkdown += `- Archived: ${json.archived}\\n\\n`;\n\njson.comments.forEach((comment: any, idx: number) => {\n  markdown += `---\\n\\n`;\n  // markdown += `### Comment ${idx + 1}\\n`;\n  // markdown += `- Author: ${comment.author}\\n`;\n  // markdown += `- Created at: ${comment.created_at}\\n`;\n  // markdown += `- Updated at: ${comment.body_updated_at}\\n\\n`;\n  markdown += `${comment.body_markdown}\\n\\n`;\n});\n\n// 出力ディレクトリを決定（一つ下の階層にmarkdownを生成）\nconst outputDir = path.join(path.dirname(inputPath), \"../\");\nif (!fs.existsSync(outputDir)) {\n  fs.mkdirSync(outputDir, { recursive: true });\n}\n\n// 出力ファイルパス\nconst outputPath = path.join(\n  outputDir,\n  path.basename(inputPath, \".json\") + \".md\"\n);\n\nfs.writeFileSync(outputPath, markdown, \"utf-8\");\nconsole.log(`Markdown file generated: ${outputPath}`);\n```"
+    }
+  ]
+}
