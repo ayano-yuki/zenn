@@ -1,3 +1,4 @@
 ---
-title: "基礎設定"
+title: "基礎的な使い方"
+free: true
 ---

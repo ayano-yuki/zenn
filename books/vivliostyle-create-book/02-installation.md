@@ -1,5 +1,6 @@
 ---
 title: "Vivliostyleのインストールと、プロジェクトの作成"
+free: true
 ---
 
 # 環境構築：Node.jsのインストール
