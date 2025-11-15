@@ -1,0 +1,16 @@
+title: "Vivliostyleで本を作ろう"
+summary: "Vivliostyleの使い方をまとめた本です。購入は推奨しません。"
+topics: [vivliostyle, CSS, markdown]
+published: false
+price: 200 # 有料の場合200〜5000
+# 本に含めるチャプターを順番に並べましょう
+chapters:
+  - 01-about-vivliostyle
+  - 02-installation
+  - 03-base-setting
+  - 04-toc
+  - 05-preface
+  - 06-contents
+  - 07-afterword
+  - 99-appendix
+  - 99-01-create-cover
