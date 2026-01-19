@@ -15,6 +15,7 @@
 - [ソフトウェアエンジニアが抱えやすい21の苦労](https://mtx2s.hatenablog.com/entry/2025/05/07/201025)
 - [Figmaを利用した資料デザインが便利！導入手順を解説します！](https://note.com/smartcamp_design/n/ncc0fb574f2d3)
 - [多忙な東大院生のタスク管理術](https://note.com/_kihansen/n/ncf66f66287f0)
+- [「それじゃ誰も乗せてくれんよ」　ヒッチハイク中の京大生をおばあちゃんが指南　結果的に〝神〟だった](https://news.yahoo.co.jp/articles/b217dd67fc6bc51014bc2eef66c62fac37f3bdca)
 
 ---
 
