@@ -3,7 +3,7 @@ title: "GPUが無い環境でローカルLLMを動かす方法"
 emoji: "📓"
 type: "tech" # tech: 技術記事 / idea: アイデア
 topics: [llm, ollama]
-published: false
+published: true
 ---
 # はじめに
 
