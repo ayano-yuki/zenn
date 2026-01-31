@@ -97,7 +97,19 @@ curl http://localhost:11434/api/generate -d '{
 LLMなので返答は固定ではありませんが、下記のような内容が返ってきたら問題ないです。
 
 ```
-<試してから書く>
+model                : qwen2.5:0.5b
+created_at           : 2026-01-31T16:56:08.187484807Z
+response             : Hello! How can I assist you today? If you have any specific questions or topics that you'd like to discuss, feel free to share them
+                       with me.
+done                 : True
+done_reason          : stop
+context              : {151644, 8948, 198, 2610...}
+total_duration       : 1954654806
+load_duration        : 1220447432
+prompt_eval_count    : 30
+prompt_eval_duration : 189151876
+eval_count           : 33
+eval_duration        : 500555845
 ```
 
 # 高速化
@@ -110,7 +122,12 @@ LLMなので返答は固定ではありませんが、下記のような内容�
 
 Dockerはパソコンの一部のリソース上で動作させるため、Dockerが使用できるリソースを増やすことで、計算量を増やし、高速化に繋がります。これはメモリやCPUが潤沢な環境で効果が出やすい方法で、Docker DesktopのSettings > Resources から、設定できます。
 
-<画像>
+WSLを使ってDockerを動かしている場合は、`.wslconfig`を使って設定する必要があります。下記の資料を見ながら作成・編集してください。
+
+https://learn.microsoft.com/en-us/windows/wsl/wsl-config
+
+https://docs.docker.jp/desktop/settings/windows.html#advanced
+
 
 ## 2. 軽量なモデルの選定
 
@@ -163,18 +180,23 @@ services:
     ulimits:
       memlock: -1
       stack: 67108864
+volumes:
+  ollama-data:
 ```
 
 ## 4. APIレスポンスのパース
 
 APIレスポンスをパースすることで処理の遅延感を減らし、ユーザーから見た高速化が出来ます。
 
-ollamaでは、APIリクエストの**stream（ストリーミングモード）**を活用し、ローカルLLMが生成したテキストをリアルタイムで1文字ずつ画面に流し込むことで、APIレスポンスをパースできます。さらに、 `jq` を使って、JSONの塊の中から「必要な文字だけ」を即座に抜き出し、改行せずに表示し続けることができます。
+ollamaでは、APIリクエストの**ストリーミングモード**を活用し、ローカルLLMが生成したテキストをリアルタイムで1文字ずつ画面に流し込むことで、APIレスポンスをパースできます。さらに、 `jq` を使うことで、JSONの塊の中から「必要な文字だけ」を即座に抜き出し、改行せずに表示し続けることができます。
 
 通常、`stream: false` の場合は、LLMがすべての回答を生成し終わるまで待機（数秒〜数十秒）が発生します。 しかし、ストリーミングを `jq` でリアルタイム処理すると：最初の1文字目までの待ち時間（TTFT）が極限まで短くなり、全体の処理時間は同じでも、ユーザーは「読みながら待てる」ため、体感速度が劇的に向上します。また、一度に受け取る情報量が減り、メモリ消費も抑えられ、巨大なレスポンスも処理しやすくなります。
 
 ```bash
 # Windows
+# HttpClientを使うためのライブラリを読み込む
+Add-Type -AssemblyName System.Net.Http
+
 $url = "http://localhost:11434/api/generate"
 $body = @{
     model  = "qwen2.5:0.5b"
@@ -182,34 +204,36 @@ $body = @{
     stream = $true
 } | ConvertTo-Json
 
-# HttpClientの準備
+# オブジェクトの作成
 $client = New-Object System.Net.Http.HttpClient
 $content = New-Object System.Net.Http.StringContent($body, [System.Text.Encoding]::UTF8, "application/json")
 
-# リクエスト送信（非同期ストリームを開始）
-$response = $client.PostAsync($url, $content).Result
-$stream = $response.Content.ReadAsStreamAsync().Result
-$reader = New-Object System.IO.StreamReader($stream)
+try {
+    # リクエスト送信とストリームの取得
+    $response = $client.PostAsync($url, $content).GetAwaiter().GetResult()
+    $stream = $response.Content.ReadAsStreamAsync().GetAwaiter().GetResult()
+    $reader = New-Object System.IO.StreamReader($stream)
 
-# データの逐次読み取り
-while (-not $reader.EndOfStream) {
-    $line = $reader.ReadLine()
-    if ($line) {
-        $json = $line | ConvertFrom-Json
-        
-        # 文章の表示（改行なしで出力）
-        Write-Host -NoNewline $json.response
-        
-        # 終了時に統計情報を表示
-        if ($json.done) {
-            Write-Host "`n`n[Finish] Time: $($json.total_duration / 1000000000)s"
+    # データの逐次読み取り
+    while (-not $reader.EndOfStream) {
+        $line = $reader.ReadLine()
+        if ($line) {
+            $json = $line | ConvertFrom-Json
+            if ($json.response) {
+                Write-Host -NoNewline $json.response
+            }
+            if ($json.done) {
+                $time = [Math]::Round($json.total_duration / 1000000000, 2)
+                Write-Host "`n`n[Finish] Time: $($time)s"
+            }
         }
     }
 }
-
-# リソース解放
-$reader.Close()
-$client.Dispose()
+finally {
+    # リソース開放
+    if ($reader) { $reader.Dispose() }
+    if ($client) { $client.Dispose() }
+}
 ```
 
 ```bash
